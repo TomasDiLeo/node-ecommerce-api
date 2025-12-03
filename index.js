@@ -1,15 +1,58 @@
 import express from "express";
-import productsRouter from "./src/routes/products.router.js";
+import cors from "cors";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import productsRoutes from "./src/routes/products.routes.js";
+import authRoutes from "./src/routes/auth.routes.js";
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-app.use("/api", productsRouter);
+// Middlewares globales
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  res.status(404).json({ error: "Not Found" });
+// Rutas
+app.use("/api/products", productsRoutes);
+app.use("/auth", authRoutes);
+
+// Ruta de bienvenida
+app.get("/", (req, res) => {
+  res.json({
+    message: "Bienvenido a TechLab Products API",
+    version: "1.0.0",
+    endpoints: {
+      products: "/api/products",
+      auth: "/auth/login",
+    },
+  });
 });
 
-const PORT = process.env.PORT;
+// Middleware para rutas no encontradas (404)
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Ruta no encontrada",
+    message: `La ruta ${req.method} ${req.url} no existe en este servidor`,
+    status: 404,
+  });
+});
 
-app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
+// Middleware de manejo de errores global
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+
+  const status = err.status || 500;
+  const message = err.message || "Error interno del servidor";
+
+  res.status(status).json({
+    error: message,
+    status: status,
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+
+// Iniciar servidor
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});

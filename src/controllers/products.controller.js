@@ -1,36 +1,79 @@
-import * as model from "../models/Product.js";
+import ProductsService from "../services/products.service.js";
 
-export const getAllProducts = async (req, res) => {
-  res.json(await model.getAllProducts());
-};
-
-export const getProductById = async (req, res) => {
-  const { id } = req.params;
-  const product = await model.getProductById(id);
-  if (!product) {
-    return res.status(404).json({ error: "Not Found" });
-  }
-  res.json(product);
-};
-
-export const createProduct = async (req, res) => {
-  if (typeof req.body.nombre == undefined) {
-    return res.status(422).json({ error: "El nombre es obligatorio" });
-  }
-
-  const { name, price } = req.body;
-  const data = { name, price };
-  const product = await model.createProduct(data);
-
-  res.status(201).json(product);
-};
-
-export const deleteProduct = async (req, res) => {
-  const { id } = req.params;
-  const deleted = await model.deleteProduct(id);
-  if (!deleted) {
-    return res.status(404).json({ error: "Not Found" });
+/**
+ * Controlador de Productos
+ * Maneja las peticiones HTTP relacionadas con productos
+ */
+class ProductsController {
+  /**
+   * GET /api/products
+   * Obtener todos los productos
+   */
+  async getAll(req, res, next) {
+    try {
+      const result = await ProductsService.getAllProducts();
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 
-  res.json({ message: "Product deleted successfully" });
+  /**
+   * GET /api/products/:id
+   * Obtener un producto por ID
+   */
+  async getById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await ProductsService.getProductById(id);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/products/create
+   * Crear un nuevo producto
+   */
+  async create(req, res, next) {
+    try {
+      const productData = req.body;
+      const result = await ProductsService.createProduct(productData);
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/products/:id
+   * Actualizar un producto
+   */
+  async update(req, res, next) {
+    try {
+      const { id } = req.params;
+      const productData = req.body;
+      const result = await ProductsService.updateProduct(id, productData);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * DELETE /api/products/:id
+   * Eliminar un producto
+   */
+  async delete(req, res, next) {
+    try {
+      const { id } = req.params;
+      const result = await ProductsService.deleteProduct(id);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+
+export default new ProductsController();
