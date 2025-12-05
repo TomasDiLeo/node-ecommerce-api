@@ -1,4 +1,5 @@
 import { db } from "../config/firebase.js";
+import { InternalServerError } from "../utils/errors.js";
 
 const COLLECTION_NAME = "products";
 const collectionRef = db.collection(COLLECTION_NAME);
@@ -14,7 +15,10 @@ class ProductModel {
       }));
     } catch (error) {
       console.error("Error al obtener productos:", error);
-      throw new Error("Error al consultar la base de datos");
+      throw new InternalServerError(
+        "Error al consultar productos",
+        "No se pudieron obtener los productos de la base de datos"
+      );
     }
   }
 
@@ -31,13 +35,15 @@ class ProductModel {
       };
     } catch (error) {
       console.error("Error al obtener producto:", error);
-      throw new Error("Error al consultar la base de datos");
+      throw new InternalServerError(
+        "Error al consultar producto",
+        "No se pudo obtener el producto de la base de datos"
+      );
     }
   }
 
   async create(productData) {
     try {
-      const now = new Date();
 
       const newProduct = {
         ...productData,
@@ -51,7 +57,10 @@ class ProductModel {
       };
     } catch (error) {
       console.error("Error al crear producto:", error);
-      throw new Error("Error al guardar en la base de datos");
+      throw new InternalServerError(
+        "Error al crear producto",
+        "No se pudo guardar el producto en la base de datos"
+      );
     }
   }
 
@@ -64,24 +73,38 @@ class ProductModel {
       };
 
       await docRef.update(updateData);
+      const updatedDoc = await docRef.get();
 
       return {
         id,
-        ...updateData,
+        ...updatedDoc.data(),
       };
     } catch (error) {
       console.error("Error al actualizar producto:", error);
-      throw new Error("Error al actualizar en la base de datos");
+      throw new InternalServerError(
+        "Error al actualizar producto",
+        "No se pudo actualizar el producto en la base de datos"
+      );
     }
   }
 
   async delete(id) {
     try {
-      await collectionRef.doc(id).delete();
-      return true;
+      const docRef = collectionRef.doc(id);
+      const snapshot = await docRef.get();
+
+      await docRef.delete();
+
+      return {
+        id: snapshot.id,
+        name: snapshot.data().name,
+      }
     } catch (error) {
       console.error("Error al eliminar producto:", error);
-      throw new Error("Error al eliminar de la base de datos");
+      throw new InternalServerError(
+        "Error al eliminar producto",
+        "No se pudo eliminar el producto de la base de datos"
+      );
     }
   }
 }

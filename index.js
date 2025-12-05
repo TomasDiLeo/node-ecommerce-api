@@ -4,6 +4,10 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import productsRoutes from "./src/routes/products.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import {
+  errorHandler,
+  notFoundHandler,
+} from "./src/middleware/errors.middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,31 +30,19 @@ app.get("/", (req, res) => {
       products: "/api/products",
       auth: "/auth/login",
     },
+    testUser: {
+      email: "admin@admin.com",
+      password: "admin123",
+    },
+    success: true,
   });
 });
 
-// Middleware para rutas no encontradas (404)
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Ruta no encontrada",
-    message: `La ruta ${req.method} ${req.url} no existe en este servidor`,
-    status: 404,
-  });
-});
+//app.use(methodNotAllowed);
 
-// Middleware de manejo de errores global
-app.use((err, req, res, next) => {
-  console.error("Error:", err);
 
-  const status = err.status || 500;
-  const message = err.message || "Error interno del servidor";
-
-  res.status(status).json({
-    error: message,
-    status: status,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // Iniciar servidor
 app.listen(PORT, () => {

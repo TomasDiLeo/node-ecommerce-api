@@ -1,5 +1,4 @@
 import ProductsService from "../services/products.service.js";
-
 /**
  * Controlador de Productos
  * Maneja las peticiones HTTP relacionadas con productos

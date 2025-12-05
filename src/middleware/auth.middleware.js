@@ -1,30 +1,32 @@
 import { auth } from "../config/firebase.js";
+import { UnauthorizedError } from "../utils/errors.js";
 
 export const verifyAuth = async (req, res, next) => {
   try {
     const header = req.headers.authorization;
 
     if (!header || !header.startsWith("Bearer ")) {
-      return res
-        .status(401)
-        .json({ message: "Missing or invalid authorization header" });
+      throw new UnauthorizedError(
+        "Formato de token inválido o faltante",
+        "El token debe tener el formato: Bearer <token>"
+      );
     }
 
     const idToken = header.split(" ")[1];
 
-    // Verify Firebase ID token
+    // Verificar el token con Firebase Admin SDK
     const decodedToken = await auth.verifyIdToken(idToken);
 
-    // Attach user info to the request
+    // Adjuntar la información del usuario al objeto req
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email,
-      name: decodedToken.name,
-      role: decodedToken.role || null, // optional custom claims
+      name: decodedToken.name || null,
+      role: decodedToken.role || null,
     };
 
     return next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    return next(error)
   }
 };
